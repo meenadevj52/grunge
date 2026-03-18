@@ -8,27 +8,21 @@
 
 FROM python:3.10-slim
 
-# prevent .pyc files and ensure stdout/err are unbuffered
-ENV PYTHONDONTWRITEBYTECODE=1 \
-  PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# install dependencies
-COPY requirements.txt ./
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# copy project code
-COPY . .
+COPY . /app/
 
-# ensure our entrypoint can execute inside the container
-RUN chmod +x docker-entrypoint.sh
+# copy entrypoint again to ensure permission layer updated
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
-# collect static assets
-RUN python manage.py collectstatic --noinput
+RUN chmod +x /app/docker-entrypoint.sh
 
-# entrypoint handles migrations before running the command
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
-# default to the development server; override in production
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
